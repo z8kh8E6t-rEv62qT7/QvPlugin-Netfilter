@@ -1,9 +1,8 @@
 name: QvPlugin Build Action Qt6
 
 on:
-  push:
-  release:
-    types: [prereleased]
+  workflow_dispatch:
+    branches: [master]
 
 jobs:
   build:
@@ -56,18 +55,24 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Release -A x64
           cmake --build . --parallel $(nproc) --config Release
 
-      - name: Uploading artifact
-        uses: actions/upload-artifact@master
+      - name: Create Tools 7z
+        uses: DuckSoft/create-7z-action@v1.0
         with:
-          name: ${{ steps.get_name.outputs.NAME }}-${{ github.sha }}.Windows.dll
-          path: build/Release/${{ steps.get_name.outputs.NAME }}.dll
+          pathSource: build/Release/
+          pathTarget: build.7z
+
+
+      # - name: Uploading artifact
+      #   uses: actions/upload-artifact@master
+      #   with:
+      #     name: ${{ steps.get_name.outputs.NAME }}-${{ github.sha }}.Windows.7z
+      #     path: build.7z
 
       - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v1-release
-        if: github.event_name == 'release'
+        uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/Release/${{ steps.get_name.outputs.NAME }}.dll
-          asset_name: ${{ steps.get_name.outputs.NAME }}.${{ steps.get_version.outputs.VERSION }}.Windows.Qt6.dll
-          tag: ${{ github.ref }}
+          file: build.7z
+          asset_name: ${{ steps.get_name.outputs.NAME }}.${{ steps.get_version.outputs.VERSION }}.Windows.Qt6.7z
+          tag: release
           overwrite: true
